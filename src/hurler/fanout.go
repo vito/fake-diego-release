@@ -3,7 +3,6 @@ package main
 import (
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 
 	"github.com/cloudfoundry/storeadapter/workerpool"
@@ -72,17 +71,12 @@ func Fanout(pool *workerpool.WorkerPool, request *http.Request, endpoints []*End
 	for i := 0; i < len(endpoints); i++ {
 		select {
 		case fanoutErr = <-errs:
-			log.Println("FANOUT ERR", fanoutErr)
 		case response = <-responses:
-			log.Println("RESPONSE", response.StatusCode)
-
 			if response.StatusCode < 400 {
 				return response, nil
 			}
 		}
 	}
-
-	log.Println("NONE OK")
 
 	if response != nil {
 		return response, nil

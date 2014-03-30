@@ -16,7 +16,7 @@ type Endpoint struct {
 var endpoints = flag.String(
 	"endpoints",
 	"",
-	"list of endpoints to fanout to",
+	"list of endpoints to which to hurl (host:ip:port)",
 )
 
 func main() {
@@ -24,16 +24,18 @@ func main() {
 
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	var es []*Endpoint
-	for _, addr := range strings.Split(*endpoints, ",") {
-		es = append(es, &Endpoint{
-			Addr: addr,
+	table := map[string][]*Endpoint{}
+	for _, endpoint := range strings.Split(*endpoints, ",") {
+		segs := strings.SplitN(endpoint, ":", 2)
+
+		table[segs[0]] = append(table[segs[0]], &Endpoint{
+			Addr: segs[1],
 		})
 	}
 
 	handler := Handler{
-		endpoints: es,
-		pool:      workerpool.NewWorkerPool(1000),
+		table: table,
+		pool:  workerpool.NewWorkerPool(1000),
 	}
 
 	http.ListenAndServe(":9090", handler)

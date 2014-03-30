@@ -2,7 +2,6 @@ package main
 
 import (
 	"io"
-	"log"
 	"net/http"
 	"os"
 
@@ -10,14 +9,19 @@ import (
 )
 
 type Handler struct {
-	endpoints []*Endpoint
-	pool      *workerpool.WorkerPool
+	table map[string][]*Endpoint
+	pool  *workerpool.WorkerPool
 }
 
 func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	res, err := RoundRobin(r, h.endpoints)
+	endpoints, ok := h.table[r.Host]
+	if !ok {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	res, err := RoundRobin(r, endpoints)
 	if err != nil {
-		log.Println("FANOUT ERR", err)
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}
@@ -27,8 +31,6 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			w.Header().Add(k, v)
 		}
 	}
-
-	log.Println("STATUS", res.Status)
 
 	w.WriteHeader(res.StatusCode)
 
