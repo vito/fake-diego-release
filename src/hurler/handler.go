@@ -2,6 +2,7 @@ package main
 
 import (
 	"io"
+	"log"
 	"net/http"
 	"os"
 
@@ -16,6 +17,7 @@ type Handler struct {
 func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	endpoints, ok := h.table[r.Host]
 	if !ok {
+		log.Println("unknown host:", r.Host)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
