@@ -3,6 +3,7 @@ package bbs
 import (
 	"bytes"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 
@@ -20,7 +21,11 @@ func NewHurlerKicker(address string) *HurlerKicker {
 }
 
 func (kicker *HurlerKicker) Desire(task *models.Task) {
-	request := &http.Request{
+	log.Println("kicking desire")
+
+	json := task.ToJSON()
+
+	res, err := http.DefaultClient.Do(&http.Request{
 		Method: "POST",
 
 		URL: &url.URL{
@@ -31,16 +36,28 @@ func (kicker *HurlerKicker) Desire(task *models.Task) {
 
 		Host: "executor",
 
-		Body: ioutil.NopCloser(bytes.NewBuffer(task.ToJSON())),
+		Body:          ioutil.NopCloser(bytes.NewBuffer(json)),
+		ContentLength: int64(len(json)),
+
+		Header: map[string][]string{
+			"Content-Type": []string{"application/json"},
+		},
+	})
+
+	if err != nil {
+		log.Println("kick desire error", err)
+		return
 	}
 
-	request.Header.Set("Content-Type", "application/json")
-
-	http.DefaultClient.Do(request)
+	log.Println("kick desire", res.Status)
 }
 
 func (kicker *HurlerKicker) Complete(task *models.Task) {
-	request := &http.Request{
+	log.Println("kicking complete")
+
+	json := task.ToJSON()
+
+	res, err := http.DefaultClient.Do(&http.Request{
 		Method: "POST",
 
 		URL: &url.URL{
@@ -51,10 +68,18 @@ func (kicker *HurlerKicker) Complete(task *models.Task) {
 
 		Host: "stager",
 
-		Body: ioutil.NopCloser(bytes.NewBuffer(task.ToJSON())),
+		Body:          ioutil.NopCloser(bytes.NewBuffer(json)),
+		ContentLength: int64(len(json)),
+
+		Header: map[string][]string{
+			"Content-Type": []string{"application/json"},
+		},
+	})
+
+	if err != nil {
+		log.Println("kick complete error", err)
+		return
 	}
 
-	request.Header.Set("Content-Type", "application/json")
-
-	http.DefaultClient.Do(request)
+	log.Println("kick complete", res.Status)
 }
