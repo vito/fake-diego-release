@@ -73,7 +73,7 @@ func main() {
 		Addr: *natsAddress,
 	})
 
-	bbs := bbs.New(*hurlerAddress, etcdAdapter, timeprovider.NewTimeProvider())
+	bbs := bbs.New(bbs.NewHurlerKicker(*hurlerAddress), etcdAdapter, timeprovider.NewTimeProvider())
 
 	ready := make(chan bool, 1)
 

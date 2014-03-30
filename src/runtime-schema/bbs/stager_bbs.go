@@ -1,11 +1,6 @@
 package bbs
 
 import (
-	"bytes"
-	"io/ioutil"
-	"net/http"
-	"net/url"
-
 	"github.com/cloudfoundry/gunk/timeprovider"
 	"github.com/cloudfoundry/storeadapter"
 
@@ -16,7 +11,7 @@ type stagerBBS struct {
 	store        storeadapter.StoreAdapter
 	timeProvider timeprovider.TimeProvider
 
-	hurlerAddress string
+	kicker Kicker
 }
 
 // The stager calls this when it wants to desire a payload
@@ -41,23 +36,7 @@ func (s *stagerBBS) DesireTask(task *models.Task) error {
 			return err
 		}
 
-		request := &http.Request{
-			Method: "POST",
-
-			URL: &url.URL{
-				Scheme: "http",
-				Host:   s.hurlerAddress,
-				Path:   "/tasks",
-			},
-
-			Host: "executor",
-
-			Body: ioutil.NopCloser(bytes.NewBuffer(task.ToJSON())),
-		}
-
-		request.Header.Set("Content-Type", "application/json")
-
-		http.DefaultClient.Do(request)
+		s.kicker.Desire(task)
 
 		return nil
 	})

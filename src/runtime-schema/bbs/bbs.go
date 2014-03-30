@@ -13,6 +13,11 @@ import (
 
 const SchemaRoot = "/v2/"
 
+type Kicker interface {
+	Desire(*models.Task)
+	Complete(*models.Task)
+}
+
 type ExecutorBBS interface {
 	MaintainExecutorPresence(
 		heartbeatInterval time.Duration,
@@ -43,20 +48,18 @@ type FileServerBBS interface {
 	) (presence Presence, disappeared <-chan bool, err error)
 }
 
-func New(hurlerAddress string, store storeadapter.StoreAdapter, timeProvider timeprovider.TimeProvider) *BBS {
+func New(kicker Kicker, store storeadapter.StoreAdapter, timeProvider timeprovider.TimeProvider) *BBS {
 	return &BBS{
 		ExecutorBBS: &executorBBS{
 			store:        store,
 			timeProvider: timeProvider,
-
-			hurlerAddress: hurlerAddress,
+			kicker:       kicker,
 		},
 
 		StagerBBS: &stagerBBS{
 			store:        store,
 			timeProvider: timeProvider,
-
-			hurlerAddress: hurlerAddress,
+			kicker:       kicker,
 		},
 
 		FileServerBBS: &fileServerBBS{

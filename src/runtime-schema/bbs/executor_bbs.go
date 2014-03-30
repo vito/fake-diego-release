@@ -1,13 +1,12 @@
 package bbs
 
 import (
-	"bytes"
-	"github.com/cloudfoundry/gosteno"
-	"github.com/cloudfoundry/gunk/timeprovider"
-	"net/http"
 	"time"
 
+	"github.com/cloudfoundry/gosteno"
+	"github.com/cloudfoundry/gunk/timeprovider"
 	"github.com/cloudfoundry/storeadapter"
+
 	"runtime-schema/models"
 )
 
@@ -15,7 +14,7 @@ type executorBBS struct {
 	store        storeadapter.StoreAdapter
 	timeProvider timeprovider.TimeProvider
 
-	hurlerAddress string
+	kicker Kicker
 }
 
 func (self *executorBBS) MaintainExecutorPresence(heartbeatInterval time.Duration, executorId string) (Presence, <-chan bool, error) {
@@ -94,11 +93,7 @@ func (self *executorBBS) CompleteTask(task *models.Task, failed bool, failureRea
 			return err
 		}
 
-		http.Post(
-			"http://127.0.0.1:9091",
-			"application/json",
-			bytes.NewBuffer(task.ToJSON()),
-		)
+		self.kicker.Complete(task)
 
 		return nil
 	})
@@ -160,11 +155,7 @@ func (self *executorBBS) ConvergeTasks(timeToClaim time.Duration) {
 				logError(task, "runonce.converge.failed-to-claim")
 				scheduleForCAS(task, markTaskFailed(task, "not claimed within time limit"))
 			} else {
-				http.Post(
-					"http://127.0.0.1:9090",
-					"application/json",
-					bytes.NewBuffer(task.ToJSON()),
-				)
+				self.kicker.Desire(&task)
 			}
 		case models.TaskStateClaimed:
 			claimedTooLong := self.timeProvider.Time().Sub(time.Unix(0, task.UpdatedAt)) >= 30*time.Second
@@ -185,11 +176,7 @@ func (self *executorBBS) ConvergeTasks(timeToClaim time.Duration) {
 				scheduleForCAS(task, markTaskFailed(task, "executor disappeared before completion"))
 			}
 		case models.TaskStateCompleted:
-			http.Post(
-				"http://127.0.0.1:9091",
-				"application/json",
-				bytes.NewBuffer(task.ToJSON()),
-			)
+			self.kicker.Complete(&task)
 		case models.TaskStateResolving:
 			resolvingTooLong := self.timeProvider.Time().Sub(time.Unix(0, task.UpdatedAt)) >= 30*time.Second
 
