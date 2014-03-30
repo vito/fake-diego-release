@@ -26,8 +26,6 @@ update:
   update_watch_time: 5000-600000
 
 resource_pools:
-  - <<: (( merge ))
-
   - name: small_z1
     network: cf1
     size: (( auto ))
