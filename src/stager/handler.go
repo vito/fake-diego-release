@@ -70,7 +70,7 @@ func (handler *Handler) resolveTask(task *models.Task) {
 		return
 	}
 
-	logger.Error("handler.resolved", map[string]interface{}{
+	logger.Info("handler.resolved", map[string]interface{}{
 		"task": task.Guid,
 	})
 }
