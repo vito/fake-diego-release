@@ -155,7 +155,7 @@ func (self *executorBBS) ConvergeTasks(timeToClaim time.Duration) {
 				logError(task, "runonce.converge.failed-to-claim")
 				scheduleForCAS(task, markTaskFailed(task, "not claimed within time limit"))
 			} else {
-				self.kicker.Desire(&task)
+				go self.kicker.Desire(&task)
 			}
 		case models.TaskStateClaimed:
 			claimedTooLong := self.timeProvider.Time().Sub(time.Unix(0, task.UpdatedAt)) >= 30*time.Second
@@ -176,7 +176,7 @@ func (self *executorBBS) ConvergeTasks(timeToClaim time.Duration) {
 				scheduleForCAS(task, markTaskFailed(task, "executor disappeared before completion"))
 			}
 		case models.TaskStateCompleted:
-			self.kicker.Complete(&task)
+			go self.kicker.Complete(&task)
 		case models.TaskStateResolving:
 			resolvingTooLong := self.timeProvider.Time().Sub(time.Unix(0, task.UpdatedAt)) >= 30*time.Second
 
