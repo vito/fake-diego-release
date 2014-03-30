@@ -50,10 +50,10 @@ func main() {
 	flag.Parse()
 
 	cleanup.Register(func() {
-		logger.Info("executor.shutting-down", map[string]interface{}{})
+		logger.Info("shutting-down", map[string]interface{}{})
 		close(stop)
 		tasks.Wait()
-		logger.Info("executor.shutdown", map[string]interface{}{})
+		logger.Info("shutdown", map[string]interface{}{})
 	})
 
 	logger.Component = fmt.Sprintf("executor.%s", *executorID)
@@ -116,6 +116,7 @@ func maintainPresence(bbs bbs.ExecutorBBS, ready chan<- bool) error {
 
 				if !locked && ok {
 					tasks.Done()
+
 					logger.Fatal("maintain.presence.fatal", map[string]interface{}{
 						"error": err.Error(),
 					})
@@ -156,13 +157,10 @@ func convergeTasks(bbs bbs.ExecutorBBS) {
 		})
 	}
 
-	tasks.Add(1)
-
 	for {
 		select {
 		case locked, ok := <-statusChannel:
 			if !ok {
-				tasks.Done()
 				return
 			}
 
