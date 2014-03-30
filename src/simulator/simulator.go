@@ -45,13 +45,13 @@ var natsAddresses = flag.String(
 
 var natsUsername = flag.String(
 	"natsUsername",
-	"nats",
+	"",
 	"Username to connect to nats",
 )
 
 var natsPassword = flag.String(
 	"natsPassword",
-	"nats",
+	"",
 	"Password for nats user",
 )
 
