@@ -149,7 +149,7 @@ func handleTasks(bbs bbs.StagerBBS, natsClient yagnats.NATSClient, listenAddr st
 func handleStaging(bbs bbs.StagerBBS, natsClient yagnats.NATSClient) {
 	var task uint64
 
-	natsClient.Subscribe("stage", func(msg *yagnats.Message) {
+	natsClient.SubscribeWithQueue("stage", "stager", func(msg *yagnats.Message) {
 		var message stagingMessage
 
 		err := json.Unmarshal(msg.Payload, &message)
