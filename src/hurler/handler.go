@@ -10,19 +10,19 @@ import (
 )
 
 type Handler struct {
-	table map[string][]*Endpoint
+	table map[string]Route
 	pool  *workerpool.WorkerPool
 }
 
 func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	endpoints, ok := h.table[r.Host]
+	route, ok := h.table[r.Host]
 	if !ok {
 		log.Println("unknown host:", r.Host)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	res, err := RoundRobin(r, endpoints)
+	res, err := route.Dispatch(h.pool, r, route.Endpoints)
 	if err != nil {
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return

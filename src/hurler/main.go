@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"log"
 	"net/http"
 	"runtime"
 	"strings"
@@ -9,14 +10,21 @@ import (
 	"github.com/cloudfoundry/storeadapter/workerpool"
 )
 
+type Route struct {
+	Dispatch  Dispatch
+	Endpoints []*Endpoint
+}
+
 type Endpoint struct {
 	Addr string
 }
 
+type Dispatch func(*workerpool.WorkerPool, *http.Request, []*Endpoint) (*http.Response, error)
+
 var endpoints = flag.String(
 	"endpoints",
 	"",
-	"list of endpoints to which to hurl (host:ip:port)",
+	"list of endpoints to which to hurl (dispatch:host:ip:port)",
 )
 
 func main() {
@@ -24,13 +32,30 @@ func main() {
 
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	table := map[string][]*Endpoint{}
-	for _, endpoint := range strings.Split(*endpoints, ",") {
-		segs := strings.SplitN(endpoint, ":", 2)
+	table := map[string]Route{}
 
-		table[segs[0]] = append(table[segs[0]], &Endpoint{
-			Addr: segs[1],
+	for _, endpoint := range strings.Split(*endpoints, ",") {
+		segs := strings.SplitN(endpoint, ":", 3)
+
+		dispatch := segs[0]
+		host := segs[1]
+		addr := segs[2]
+
+		route := table[host]
+
+		if dispatch == "round-robin" {
+			route.Dispatch = RoundRobin
+		} else if dispatch == "fanout" {
+			route.Dispatch = Fanout
+		} else {
+			log.Fatalln("dispatch must be round-robin or fanout:", dispatch)
+		}
+
+		route.Endpoints = append(route.Endpoints, &Endpoint{
+			Addr: addr,
 		})
+
+		table[host] = route
 	}
 
 	handler := Handler{
