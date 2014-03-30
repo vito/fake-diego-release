@@ -31,7 +31,7 @@ func Fatal(subject string, data map[string]interface{}) {
 }
 
 func log(level, subject string, data map[string]interface{}) {
-	data["_timestamp"] = time.Now().UnixNano()
+	data["_timestamp"] = time.Now()
 
 	payload, err := json.Marshal(data)
 	if err != nil {
