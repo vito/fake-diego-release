@@ -34,14 +34,18 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 		"task": task.Guid,
 	})
 
-	err = handler.bbs.ResolvingTask(task)
+	go handler.resolveTask(task)
+
+	writer.WriteHeader(http.StatusOK)
+}
+
+func (handler *Handler) resolveTask(task *models.Task) {
+	err := handler.bbs.ResolvingTask(task)
 	if err != nil {
 		logger.Error("handler.resolving-failed", map[string]interface{}{
 			"task":  task.Guid,
 			"error": err.Error(),
 		})
-
-		writer.WriteHeader(http.StatusInternalServerError)
 
 		return
 	}
@@ -53,8 +57,6 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 			"error": err.Error(),
 		})
 
-		writer.WriteHeader(http.StatusInternalServerError)
-
 		return
 	}
 
@@ -65,14 +67,10 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 			"error": err.Error(),
 		})
 
-		writer.WriteHeader(http.StatusInternalServerError)
-
 		return
 	}
 
 	logger.Error("handler.resolved", map[string]interface{}{
 		"task": task.Guid,
 	})
-
-	writer.WriteHeader(http.StatusOK)
 }
