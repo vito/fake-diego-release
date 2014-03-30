@@ -42,7 +42,7 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 func (handler *Handler) resolveTask(task *models.Task) {
 	err := handler.bbs.ResolvingTask(task)
 	if err != nil {
-		logger.Error("handler.resolving-failed", map[string]interface{}{
+		logger.Info("handler.resolving-failed", map[string]interface{}{
 			"task":  task.Guid,
 			"error": err.Error(),
 		})
