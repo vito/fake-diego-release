@@ -27,17 +27,13 @@ var ErrNoCapacity = errors.New("no capacity")
 func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	var task *models.Task
 
-	responseCode := http.StatusInternalServerError
-	defer writer.WriteHeader(responseCode)
-
 	err := json.NewDecoder(request.Body).Decode(&task)
 	if err != nil {
 		logger.Error("handler.malformed-payload", map[string]interface{}{
-			"task":  task.Guid,
 			"error": err.Error(),
 		})
 
-		responseCode = http.StatusBadRequest
+		writer.WriteHeader(http.StatusBadRequest)
 
 		return
 	}
@@ -52,7 +48,7 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 			"task": task.Guid,
 		})
 
-		responseCode = http.StatusServiceUnavailable
+		writer.WriteHeader(http.StatusServiceUnavailable)
 
 		return
 	}
@@ -70,14 +66,14 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 			"error": err.Error(),
 		})
 
-		responseCode = http.StatusConflict
+		writer.WriteHeader(http.StatusConflict)
 
 		return
 	}
 
 	go handler.runTask(task)
 
-	responseCode = http.StatusCreated
+	writer.WriteHeader(http.StatusCreated)
 }
 
 func (handler *Handler) runTask(task *models.Task) {
