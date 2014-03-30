@@ -204,10 +204,7 @@ func registerHandler(etcdAdapter *etcdstoreadapter.ETCDStoreAdapter, addr string
 
 				if !locked && ok {
 					tasks.Done()
-
-					logger.Fatal("maintain.route.fatal", map[string]interface{}{
-						"error": err.Error(),
-					})
+					logger.Fatal("maintain.route.fatal", map[string]interface{}{})
 				}
 
 				if !ok {

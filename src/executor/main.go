@@ -170,10 +170,7 @@ func maintainPresence(bbs bbs.ExecutorBBS, ready chan<- bool) error {
 
 				if !locked && ok {
 					tasks.Done()
-
-					logger.Fatal("maintain.presence.fatal", map[string]interface{}{
-						"error": err.Error(),
-					})
+					logger.Fatal("maintain.presence.fatal", map[string]interface{}{})
 				}
 
 				if !ok {
@@ -261,10 +258,7 @@ func registerHandler(etcdAdapter *etcdstoreadapter.ETCDStoreAdapter, addr string
 
 				if !locked && ok {
 					tasks.Done()
-
-					logger.Fatal("maintain.route.fatal", map[string]interface{}{
-						"error": err.Error(),
-					})
+					logger.Fatal("maintain.route.fatal", map[string]interface{}{})
 				}
 
 				if !ok {
