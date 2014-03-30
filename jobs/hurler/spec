@@ -1,0 +1,14 @@
+---
+name: hurler
+
+templates:
+  ctl.erb: bin/ctl
+
+packages:
+  - common
+  - hurler
+
+properties:
+  etcd.machines:
+    description: "IPs pointing to the ETCD cluster"
+

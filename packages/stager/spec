@@ -1,0 +1,8 @@
+---
+name: stager
+
+dependencies:
+  - golang
+
+files:
+  - '**/*.go'

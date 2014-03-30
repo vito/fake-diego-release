@@ -1,0 +1,8 @@
+---
+name: executor
+
+dependencies:
+  - golang
+
+files:
+  - '**/*.go'

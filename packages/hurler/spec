@@ -1,0 +1,8 @@
+---
+name: hurler
+
+dependencies:
+  - golang
+
+files:
+  - '**/*.go'

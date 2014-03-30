@@ -1,0 +1,5 @@
+check process hurler
+  with pidfile /var/vcap/sys/run/hurler/hurler.pid
+  start program "/var/vcap/jobs/hurler/bin/ctl start"
+  stop program "/var/vcap/jobs/hurler/bin/ctl stop"
+  group vcap

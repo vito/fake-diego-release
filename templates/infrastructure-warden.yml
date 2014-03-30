@@ -1,0 +1,60 @@
+meta:
+  stemcell:
+    name: bosh-warden-boshlite-ubuntu
+    version: latest
+
+update:
+  canaries: 0
+  max_in_flight: 10
+  canary_watch_time: 1000-60000
+  update_watch_time: 1000-60000
+
+compilation:
+  cloud_properties:
+    name: random
+
+jobs:
+  - name: nats
+    instances: 1
+    networks:
+      - name: cf1
+        static_ips: (( static_ips(1) ))
+
+  - name: etcd
+    instances: 1
+    networks:
+      - name: cf1
+        static_ips: (( static_ips(9) ))
+
+  - name: hurler
+    instances: 1
+    networks:
+      - name: cf1
+        static_ips: (( static_ips(16) ))
+
+resource_pools:
+  - name: small_z1
+    cloud_properties:
+      name: random
+
+  - name: small_z2
+    cloud_properties:
+      name: random
+
+  - name: medium_z1
+    cloud_properties:
+      name: random
+
+  - name: medium_z2
+    cloud_properties:
+      name: random
+
+  - name: large_z1
+    cloud_properties:
+      name: random
+
+  - name: large_z2
+    cloud_properties:
+      name: random
+
+networks: (( merge ))

@@ -1,0 +1,48 @@
+#!/bin/bash -e
+
+RUN_DIR=/var/vcap/sys/run/stager
+LOG_DIR=/var/vcap/sys/log/stager
+DATA_DIR=/var/vcap/data/stager
+
+PIDFILE=$RUN_DIR/stager.pid
+
+source /var/vcap/packages/common/utils.sh
+
+case $1 in
+
+  start)
+    pid_guard $PIDFILE "stager"
+
+    mkdir -p $RUN_DIR
+    mkdir -p $DATA_DIR
+    mkdir -p $LOG_DIR
+
+    depot=$DATA_DIR/depot
+
+    mkdir -p $DATA_DIR/depot
+
+    echo $$ > /var/vcap/sys/run/stager/stager.pid
+
+    exec /var/vcap/packages/stager/bin/stager \
+      -listenAddr=<%= spec.networks.send(properties.network_name).ip %>:5555 \
+      -etcdCluster=<%= p("etcd.machines").map{|addr| "\"http://#{addr}:4001\""}.join(",")%> \
+      -natsAddresses=<%= p("nats.machines").collect { |addr| "#{addr}:#{p("nats.port")}" }.join(",") %> \
+      -natsUsername=<%= p("nats.user") %> \
+      -natsPassword=<%= p("nats.password") %> \
+      -hurlerAddress=<%= p("hurler.machine") %>:9090 \
+      1>>$LOG_DIR/stager.stdout.log \
+      2>>$LOG_DIR/stager.stderr.log
+
+    ;;
+
+  stop)
+    kill_and_wait $PIDFILE
+
+    ;;
+
+  *)
+    echo "Usage: ctl {start|stop}"
+
+    ;;
+
+esac

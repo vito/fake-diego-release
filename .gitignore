@@ -16,3 +16,4 @@ blobs
 
 bin/
 pkg/
+deployment.yml

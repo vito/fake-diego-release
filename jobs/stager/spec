@@ -1,0 +1,32 @@
+---
+name: stager
+
+templates:
+  ctl.erb: bin/ctl
+
+packages:
+  - common
+  - stager
+
+properties:
+  etcd.machines:
+    description: "IPs pointing to the ETCD cluster"
+
+  nats.user:
+    description: "Username for server authentication."
+  nats.password:
+    description: "Password for server authentication."
+  nats.port:
+    description: "The port for the NATS server to listen on."
+  nats.machines:
+    description: "IP of each NATS cluster member."
+
+  stager.compilers:
+    default: "{}"
+    description: "Map of compilers for different stacks in json format {'stack_name':'compiler_path'}"
+
+  hurler.machine:
+    description: "address of the hurler."
+
+  network_name:
+    description: "so the job can discover its ip"

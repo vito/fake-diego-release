@@ -1,0 +1,32 @@
+---
+name: executor
+
+templates:
+  ctl.erb: bin/ctl
+
+packages:
+  - common
+  - executor
+
+properties:
+  executor.memory_capacity_mb:
+    description: "the memory capacity the executor should manage.  this should not be greater than the actual memory on the VM"
+    default: 1024
+
+  etcd.machines:
+    description: "IPs pointing to the ETCD cluster"
+
+  nats.user:
+    description: "Username for server authentication."
+  nats.password:
+    description: "Password for server authentication."
+  nats.port:
+    description: "The port for the NATS server to listen on."
+  nats.machines:
+    description: "address of each NATS cluster member."
+
+  hurler.machine:
+    description: "address of the hurler."
+
+  network_name:
+    description: "so the job can discover its ip"

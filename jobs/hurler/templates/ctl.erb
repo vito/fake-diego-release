@@ -1,0 +1,43 @@
+#!/bin/bash -e
+
+RUN_DIR=/var/vcap/sys/run/hurler
+LOG_DIR=/var/vcap/sys/log/hurler
+DATA_DIR=/var/vcap/data/hurler
+
+PIDFILE=$RUN_DIR/hurler.pid
+
+source /var/vcap/packages/common/utils.sh
+
+case $1 in
+
+  start)
+    pid_guard $PIDFILE "hurler"
+
+    mkdir -p $RUN_DIR
+    mkdir -p $DATA_DIR
+    mkdir -p $LOG_DIR
+
+    depot=$DATA_DIR/depot
+
+    mkdir -p $DATA_DIR/depot
+
+    echo $$ > /var/vcap/sys/run/hurler/hurler.pid
+
+    exec /var/vcap/packages/hurler/bin/hurler \
+      -etcdCluster=<%= p("etcd.machines").map{|addr| "\"http://#{addr}:4001\""}.join(",")%> \
+      1>>$LOG_DIR/hurler.stdout.log \
+      2>>$LOG_DIR/hurler.stderr.log
+
+    ;;
+
+  stop)
+    kill_and_wait $PIDFILE
+
+    ;;
+
+  *)
+    echo "Usage: ctl {start|stop}"
+
+    ;;
+
+esac
