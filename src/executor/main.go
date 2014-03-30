@@ -237,7 +237,7 @@ func convergeTasks(bbs bbs.ExecutorBBS) {
 func registerHandler(etcdAdapter *etcdstoreadapter.ETCDStoreAdapter, addr string, ready chan<- bool) error {
 	node := storeadapter.StoreNode{
 		Key: "/v1/routes/round-robin/executor/" + addr,
-		TTL: 10,
+		TTL: 60,
 	}
 
 	status, clearNode, err := etcdAdapter.MaintainNode(node)
