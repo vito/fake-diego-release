@@ -57,7 +57,7 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 		"task": task.Guid,
 	})
 
-	err = handler.bbs.ClaimTask(task, *executorID)
+	err = handler.bbs.ClaimTask(task, executorID)
 	if err != nil {
 		handler.releaseMemory(task.MemoryMB)
 

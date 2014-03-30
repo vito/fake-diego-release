@@ -30,7 +30,6 @@ case $ACTION in
     echo $$ > /var/vcap/sys/run/executor/executor-${NUM}.pid
 
     exec /var/vcap/packages/executor/bin/executor \
-      -executorID=$(expr <%= spec.index * p("executor.executors_per_instance") %> + $NUM) \
       -listenAddr=<%= spec.networks.send(properties.network_name).ip %>:$(expr 4444 + $NUM) \
       -etcdCluster=<%= p("etcd.machines").map{|addr| "\"http://#{addr}:4001\""}.join(",")%> \
       -natsAddresses=<%= p("nats.machines").collect { |addr| "#{addr}:#{p("nats.port")}" }.join(",") %> \

@@ -17,6 +17,7 @@ import (
 	"github.com/cloudfoundry/storeadapter/etcdstoreadapter"
 	"github.com/cloudfoundry/storeadapter/workerpool"
 	"github.com/cloudfoundry/yagnats"
+	uuid "github.com/nu7hatch/gouuid"
 	"github.com/onsi/ginkgo/cleanup"
 
 	"logger"
@@ -24,8 +25,6 @@ import (
 )
 
 var listenAddr = flag.String("listenAddr", "127.0.0.1:4444", "listening address for api server")
-
-var executorID = flag.String("executorID", "executor-id", "the executor's ID")
 
 var etcdCluster = flag.String("etcdCluster", "http://127.0.0.1:4001", "comma-separated list of etcd URIs (http://ip:port)")
 
@@ -57,6 +56,8 @@ var maxMemory = flag.Int("memoryMB", 1000, "maximum memory capacity")
 var stop = make(chan bool)
 var tasks = &sync.WaitGroup{}
 
+var executorID string
+
 var MaintainPresenceError = errors.New("failed to maintain presence")
 
 func main() {
@@ -67,6 +68,13 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 
 	flag.Parse()
+
+	executorUUID, err := uuid.NewV4()
+	if err != nil {
+		log.Fatalln("could not generate guid:", err)
+	}
+
+	executorID = executorUUID.String()
 
 	cleanup.Register(func() {
 		logger.Info("shutting-down", map[string]interface{}{})
@@ -98,7 +106,7 @@ func main() {
 		log.Fatalln("could not connect to nats:", err)
 	}
 
-	logger.Component = fmt.Sprintf("executor.%s", *executorID)
+	logger.Component = fmt.Sprintf("executor.%s", executorID)
 
 	etcdAdapter := etcdstoreadapter.NewETCDStoreAdapter(
 		strings.Split(*etcdCluster, ","),
@@ -136,14 +144,14 @@ func main() {
 	<-ready
 
 	logger.Info("up", map[string]interface{}{
-		"executor": *executorID,
+		"executor": executorID,
 	})
 
 	select {}
 }
 
 func maintainPresence(bbs bbs.ExecutorBBS, ready chan<- bool) error {
-	p, statusChannel, err := bbs.MaintainExecutorPresence(*heartbeatInterval, *executorID)
+	p, statusChannel, err := bbs.MaintainExecutorPresence(*heartbeatInterval, executorID)
 	if err != nil {
 		ready <- false
 		return err
@@ -196,7 +204,7 @@ func handleTasks(bbs bbs.ExecutorBBS, listenAddr string) {
 }
 
 func convergeTasks(bbs bbs.ExecutorBBS) {
-	statusChannel, releaseLock, err := bbs.MaintainConvergeLock(*convergenceInterval, *executorID)
+	statusChannel, releaseLock, err := bbs.MaintainConvergeLock(*convergenceInterval, executorID)
 	if err != nil {
 		logger.Fatal("converge-lock.acquire-failed", map[string]interface{}{
 			"error": err.Error(),
