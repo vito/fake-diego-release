@@ -101,7 +101,7 @@ func (handler *Handler) runTask(task *models.Task) {
 		return
 	}
 
-	sleepForARandomInterval("task.run", 5000, 5000, map[string]interface{}{
+	sleepForARandomInterval("task.run", 5000, 5001, map[string]interface{}{
 		"task": task.Guid,
 	})
 
