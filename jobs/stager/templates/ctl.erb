@@ -24,6 +24,7 @@ case $1 in
     echo $$ > /var/vcap/sys/run/stager/stager.pid
 
     exec /var/vcap/packages/stager/bin/stager \
+      -stagerID=<%= spec.index %> \
       -listenAddr=<%= spec.networks.send(properties.network_name).ip %>:5555 \
       -etcdCluster=<%= p("etcd.machines").map{|addr| "\"http://#{addr}:4001\""}.join(",")%> \
       -natsAddresses=<%= p("nats.machines").collect { |addr| "#{addr}:#{p("nats.port")}" }.join(",") %> \

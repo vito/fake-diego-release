@@ -13,6 +13,10 @@ properties:
     description: "the memory capacity the executor should manage.  this should not be greater than the actual memory on the VM"
     default: 1024
 
+  executor.executors_per_instance:
+    description: "the number of executors to run on every VM"
+    default: 50
+
   etcd.machines:
     description: "IPs pointing to the ETCD cluster"
 

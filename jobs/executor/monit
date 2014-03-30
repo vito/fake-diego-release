@@ -1,5 +1,7 @@
-check process executor
-  with pidfile /var/vcap/sys/run/executor/executor.pid
-  start program "/var/vcap/jobs/executor/bin/ctl start"
-  stop program "/var/vcap/jobs/executor/bin/ctl stop"
+<% p("executor.executors_per_instance").times do |i| %>
+check process executor-<%= i %>
+  with pidfile /var/vcap/sys/run/executor/executor-<%= i %>.pid
+  start program "/var/vcap/jobs/executor/bin/ctl start <%= i %>"
+  stop program "/var/vcap/jobs/executor/bin/ctl stop <%= i %>"
   group vcap
+<% end %>

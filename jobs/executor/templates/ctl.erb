@@ -1,19 +1,22 @@
 #!/bin/bash -e
 
+ACTION=${1}
+NUM=${2:-0}
+
 RUN_DIR=/var/vcap/sys/run/executor
 LOG_DIR=/var/vcap/sys/log/executor
 executor_CONF_DIR=/var/vcap/jobs/dea_next/config
 FIRSTRUN_PATH=$RUN_DIR/firstrun
-PIDFILE=$RUN_DIR/executor.pid
+PIDFILE=$RUN_DIR/executor-${NUM}.pid
 DATA_DIR=/var/vcap/data/executor
 TMP_DIR=$DATA_DIR/tmp
 
 source /var/vcap/packages/common/utils.sh
 
-case $1 in
+case $ACTION in
 
   start)
-    pid_guard $PIDFILE "executor"
+    pid_guard $PIDFILE "executor-$NUM"
 
     mkdir -p $RUN_DIR
     mkdir -p $DATA_DIR
@@ -24,18 +27,19 @@ case $1 in
     mkdir -p $DATA_DIR/depot
     mkdir -p $TMP_DIR
 
-    echo $$ > /var/vcap/sys/run/executor/executor.pid
+    echo $$ > /var/vcap/sys/run/executor/executor-${NUM}.pid
 
     exec /var/vcap/packages/executor/bin/executor \
-      -listenAddr=<%= spec.networks.send(properties.network_name).ip %>:4444 \
+      -executorID=$(expr <%= spec.index * p("executor.executors_per_instance") %> + $NUM) \
+      -listenAddr=<%= spec.networks.send(properties.network_name).ip %>:$(expr 4444 + $NUM) \
       -etcdCluster=<%= p("etcd.machines").map{|addr| "\"http://#{addr}:4001\""}.join(",")%> \
       -natsAddresses=<%= p("nats.machines").collect { |addr| "#{addr}:#{p("nats.port")}" }.join(",") %> \
       -natsUsername=<%= p("nats.user") %> \
       -natsPassword=<%= p("nats.password") %> \
       -hurlerAddress=<%= p("hurler.machine") %>:9090 \
       -memoryMB=<%= p("executor.memory_capacity_mb") %> \
-      1>>$LOG_DIR/executor.stdout.log \
-      2>>$LOG_DIR/executor.stderr.log
+      1>>$LOG_DIR/executor-${NUM}.stdout.log \
+      2>>$LOG_DIR/executor-${NUM}.stderr.log
 
     ;;
 
@@ -45,7 +49,7 @@ case $1 in
     ;;
 
   *)
-    echo "Usage: ctl {start|stop}"
+    echo "Usage: ctl {start|stop} [num]"
 
     ;;
 
