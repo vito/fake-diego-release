@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/cloudfoundry/gunk/timeprovider"
+	"github.com/cloudfoundry/storeadapter"
 	"github.com/cloudfoundry/storeadapter/etcdstoreadapter"
 	"github.com/cloudfoundry/storeadapter/workerpool"
 	"github.com/cloudfoundry/yagnats"
@@ -23,8 +24,7 @@ import (
 	"runtime-schema/models"
 )
 
-var listenNetwork = flag.String("listenNetwork", "tcp", "listening network for api server (tcp, unix)")
-var listenAddr = flag.String("listenAddr", ":5555", "listening address for api server")
+var listenAddr = flag.String("listenAddr", "127.0.0.1:5555", "listening address for api server")
 
 var stagerID = flag.String("stagerID", "stager-id", "the stager's ID")
 
@@ -93,6 +93,13 @@ func main() {
 
 	ready := make(chan bool, 1)
 
+	err = registerHandler(etcdAdapter, *listenAddr, ready)
+	if err != nil {
+		logger.Fatal("initializing-route", map[string]interface{}{
+			"error": err.Error(),
+		})
+	}
+
 	go handleTasks(bbs, natsClient, *listenAddr)
 
 	handleStaging(bbs, natsClient)
@@ -149,4 +156,55 @@ func handleStaging(bbs bbs.StagerBBS, natsClient yagnats.NATSClient) {
 			go bbs.DesireTask(task)
 		}
 	})
+}
+
+func registerHandler(etcdAdapter *etcdstoreadapter.ETCDStoreAdapter, addr string, ready chan<- bool) error {
+	node := storeadapter.StoreNode{
+		Key: "/v1/routes/round-robin/stager/" + addr,
+		TTL: 10,
+	}
+
+	status, clearNode, err := etcdAdapter.MaintainNode(node)
+	if err != nil {
+		return err
+	}
+
+	tasks.Add(1)
+
+	go func() {
+		for {
+			select {
+			case locked, ok := <-status:
+				if locked && ready != nil {
+					ready <- true
+					ready = nil
+				}
+
+				if !locked && ok {
+					tasks.Done()
+
+					logger.Fatal("maintain.route.fatal", map[string]interface{}{
+						"error": err.Error(),
+					})
+				}
+
+				if !ok {
+					tasks.Done()
+					return
+				}
+
+			case <-stop:
+				close(clearNode)
+
+				for _ = range status {
+				}
+
+				tasks.Done()
+
+				return
+			}
+		}
+	}()
+
+	return nil
 }

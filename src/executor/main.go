@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/cloudfoundry/gunk/timeprovider"
+	"github.com/cloudfoundry/storeadapter"
 	"github.com/cloudfoundry/storeadapter/etcdstoreadapter"
 	"github.com/cloudfoundry/storeadapter/workerpool"
 	"github.com/cloudfoundry/yagnats"
@@ -21,8 +22,7 @@ import (
 	"runtime-schema/bbs"
 )
 
-var listenNetwork = flag.String("listenNetwork", "tcp", "listening network for api server (tcp, unix)")
-var listenAddr = flag.String("listenAddr", ":4444", "listening address for api server")
+var listenAddr = flag.String("listenAddr", "127.0.0.1:4444", "listening address for api server")
 
 var executorID = flag.String("executorID", "executor-id", "the executor's ID")
 
@@ -84,9 +84,17 @@ func main() {
 		})
 	}
 
+	err = registerHandler(etcdAdapter, *listenAddr, ready)
+	if err != nil {
+		logger.Fatal("initializing-route", map[string]interface{}{
+			"error": err.Error(),
+		})
+	}
+
 	go handleTasks(bbs, *listenAddr)
 	go convergeTasks(bbs)
 
+	<-ready
 	<-ready
 
 	logger.Info("up", map[string]interface{}{
@@ -181,4 +189,55 @@ func convergeTasks(bbs bbs.ExecutorBBS) {
 			releaseLock <- nil
 		}
 	}
+}
+
+func registerHandler(etcdAdapter *etcdstoreadapter.ETCDStoreAdapter, addr string, ready chan<- bool) error {
+	node := storeadapter.StoreNode{
+		Key: "/v1/routes/round-robin/executor/" + addr,
+		TTL: 10,
+	}
+
+	status, clearNode, err := etcdAdapter.MaintainNode(node)
+	if err != nil {
+		return err
+	}
+
+	tasks.Add(1)
+
+	go func() {
+		for {
+			select {
+			case locked, ok := <-status:
+				if locked && ready != nil {
+					ready <- true
+					ready = nil
+				}
+
+				if !locked && ok {
+					tasks.Done()
+
+					logger.Fatal("maintain.route.fatal", map[string]interface{}{
+						"error": err.Error(),
+					})
+				}
+
+				if !ok {
+					tasks.Done()
+					return
+				}
+
+			case <-stop:
+				close(clearNode)
+
+				for _ = range status {
+				}
+
+				tasks.Done()
+
+				return
+			}
+		}
+	}()
+
+	return nil
 }
