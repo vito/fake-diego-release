@@ -1,2 +1,8 @@
 ---
 director_uuid: 652b27fa-8691-449e-b84f-1d748e692dcc
+
+jobs:
+  - name: executor
+    instances: 2
+  - name: stager
+    instances: 10
