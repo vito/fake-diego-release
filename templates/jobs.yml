@@ -18,7 +18,8 @@ jobs:
       - name: cf1
         static_ips: (( merge ))
     properties:
-      networks: (( meta.networks.z1 ))
+      networks:
+        apps: cf1
 
   - name: etcd
     release: cf
@@ -30,14 +31,15 @@ jobs:
       - name: cf1
         static_ips:  (( merge ))
     properties:
-      networks: (( meta.networks.z1 ))
+      networks:
+        apps: cf1
 
   - name: hurler
     release: fake-diego
     template:
       - hurler
     instances: 1
-    resource_pool: small_z1
+    resource_pool: large_z1
     networks:
       - name: cf1
         static_ips:  (( merge ))
@@ -48,7 +50,7 @@ jobs:
     release: fake-diego
     template:
       - executor
-    instances: 1
+    instances: 2
     resource_pool: large_z1
     networks:
       - name: cf1
@@ -59,7 +61,7 @@ jobs:
     release: fake-diego
     template:
       - stager
-    instances: 1
+    instances: 2
     resource_pool: small_z1
     networks:
       - name: cf1
@@ -76,8 +78,8 @@ properties:
   nats:
     machines: (( jobs.nats.networks.cf1.static_ips ))
     port: 4222
-    user: (( merge ))
-    password: (( merge ))
+    user: ""
+    password: ""
     use_gnatsd: true
 
   hurler:
