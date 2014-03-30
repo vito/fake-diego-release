@@ -25,9 +25,6 @@ func RoundRobin(request *http.Request, endpoints []*Endpoint) (*http.Response, e
 			i = 0
 		}
 
-		attempts++
-		i++
-
 		url := *request.URL
 		url.Scheme = "http"
 		url.Host = endpoints[i].Addr
@@ -40,6 +37,9 @@ func RoundRobin(request *http.Request, endpoints []*Endpoint) (*http.Response, e
 		request := &req
 
 		response, err := transport.RoundTrip(request)
+
+		attempts++
+		i++
 
 		if attempts == len(endpoints) {
 			return response, err
