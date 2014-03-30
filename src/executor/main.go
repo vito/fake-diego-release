@@ -27,8 +27,8 @@ var listenAddr = flag.String("listenAddr", ":4444", "listening address for api s
 var executorID = flag.String("executorID", "executor-id", "the executor's ID")
 
 var etcdCluster = flag.String("etcdCluster", "http://127.0.0.1:4001", "comma-separated list of etcd URIs (http://ip:port)")
-
 var natsAddress = flag.String("natsAddress", "127.0.0.1:4222", "nats address, used for logging. no, really.")
+var hurlerAddress = flag.String("hurlerAddress", "127.0.0.1:9090", "hurler address")
 
 var heartbeatInterval = flag.Duration("heartbeatInterval", 60*time.Second, "the interval, in seconds, between heartbeats for maintaining presence")
 var convergenceInterval = flag.Duration("convergenceInterval", 30*time.Second, "the interval, in seconds, between convergences")
@@ -73,7 +73,7 @@ func main() {
 		Addr: *natsAddress,
 	})
 
-	bbs := bbs.New(etcdAdapter, timeprovider.NewTimeProvider())
+	bbs := bbs.New(*hurlerAddress, etcdAdapter, timeprovider.NewTimeProvider())
 
 	ready := make(chan bool, 1)
 
@@ -168,9 +168,10 @@ func convergeTasks(bbs bbs.ExecutorBBS) {
 
 			if locked {
 				t := time.Now()
+
 				logger.Info("converging", map[string]interface{}{})
 
-				bbs.ConvergeTask(*timeToClaimTask)
+				bbs.ConvergeTasks(*timeToClaimTask)
 
 				logger.Info("converged", map[string]interface{}{
 					"took": time.Since(t),

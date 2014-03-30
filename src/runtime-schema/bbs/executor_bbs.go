@@ -14,6 +14,8 @@ import (
 type executorBBS struct {
 	store        storeadapter.StoreAdapter
 	timeProvider timeprovider.TimeProvider
+
+	hurlerAddress string
 }
 
 func (self *executorBBS) MaintainExecutorPresence(heartbeatInterval time.Duration, executorId string) (Presence, <-chan bool, error) {
@@ -102,7 +104,7 @@ func (self *executorBBS) CompleteTask(task *models.Task, failed bool, failureRea
 	})
 }
 
-// ConvergeTask is run by *one* executor every X seconds (doesn't really matter what X is.. pick something performant)
+// ConvergeTasks is run by *one* executor every X seconds (doesn't really matter what X is.. pick something performant)
 // Converge will:
 // 1. Kick (by setting) any run-onces that are still pending
 // 2. Kick (by setting) any run-onces that are completed
@@ -110,7 +112,7 @@ func (self *executorBBS) CompleteTask(task *models.Task, failed bool, failureRea
 // 4. Demote to completed any resolving run-onces that have been resolving for > 30s
 // 5. Mark as failed any run-onces that have been in the pending state for > timeToClaim
 // 6. Mark as failed any claimed or running run-onces whose executor has stopped maintaining presence
-func (self *executorBBS) ConvergeTask(timeToClaim time.Duration) {
+func (self *executorBBS) ConvergeTasks(timeToClaim time.Duration) {
 	taskState, err := self.store.ListRecursively(TaskSchemaRoot)
 	if err != nil {
 		return

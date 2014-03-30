@@ -23,7 +23,7 @@ type ExecutorBBS interface {
 	StartTask(task *models.Task, containerHandle string) error
 	CompleteTask(task *models.Task, failed bool, failureReason string, result string) error
 
-	ConvergeTask(timeToClaim time.Duration)
+	ConvergeTasks(timeToClaim time.Duration)
 	MaintainConvergeLock(interval time.Duration, executorID string) (disappeared <-chan bool, stop chan<- chan bool, err error)
 }
 
@@ -43,16 +43,20 @@ type FileServerBBS interface {
 	) (presence Presence, disappeared <-chan bool, err error)
 }
 
-func New(store storeadapter.StoreAdapter, timeProvider timeprovider.TimeProvider) *BBS {
+func New(hurlerAddress string, store storeadapter.StoreAdapter, timeProvider timeprovider.TimeProvider) *BBS {
 	return &BBS{
 		ExecutorBBS: &executorBBS{
 			store:        store,
 			timeProvider: timeProvider,
+
+			hurlerAddress: hurlerAddress,
 		},
 
 		StagerBBS: &stagerBBS{
 			store:        store,
 			timeProvider: timeProvider,
+
+			hurlerAddress: hurlerAddress,
 		},
 
 		FileServerBBS: &fileServerBBS{
