@@ -4,6 +4,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"log"
 	"math/rand"
 	"net/http"
 	"runtime"
@@ -27,13 +28,31 @@ var listenAddr = flag.String("listenAddr", "127.0.0.1:4444", "listening address 
 var executorID = flag.String("executorID", "executor-id", "the executor's ID")
 
 var etcdCluster = flag.String("etcdCluster", "http://127.0.0.1:4001", "comma-separated list of etcd URIs (http://ip:port)")
-var natsAddress = flag.String("natsAddress", "127.0.0.1:4222", "nats address, used for logging. no, really.")
+
+var natsAddresses = flag.String(
+	"natsAddresses",
+	"127.0.0.1:4222",
+	"comma-separated list of NATS addresses (ip:port)",
+)
+
+var natsUsername = flag.String(
+	"natsUsername",
+	"nats",
+	"Username to connect to nats",
+)
+
+var natsPassword = flag.String(
+	"natsPassword",
+	"nats",
+	"Password for nats user",
+)
+
 var hurlerAddress = flag.String("hurlerAddress", "127.0.0.1:9090", "hurler address")
 
 var heartbeatInterval = flag.Duration("heartbeatInterval", 60*time.Second, "the interval, in seconds, between heartbeats for maintaining presence")
 var convergenceInterval = flag.Duration("convergenceInterval", 30*time.Second, "the interval, in seconds, between convergences")
 var timeToClaimTask = flag.Duration("timeToClaimTask", 30*time.Minute, "unclaimed run onces are marked as failed, after this time (in seconds)")
-var maxMemory = flag.Int("availableMemory", 1000, "amount of available memory")
+var maxMemory = flag.Int("memoryMB", 1000, "maximum memory capacity")
 
 var stop = make(chan bool)
 var tasks = &sync.WaitGroup{}
@@ -56,6 +75,29 @@ func main() {
 		logger.Info("shutdown", map[string]interface{}{})
 	})
 
+	natsClient := yagnats.NewClient()
+
+	natsMembers := []yagnats.ConnectionProvider{}
+
+	for _, addr := range strings.Split(*natsAddresses, ",") {
+		natsMembers = append(
+			natsMembers,
+			&yagnats.ConnectionInfo{addr, *natsUsername, *natsPassword},
+		)
+	}
+
+	natsInfo := &yagnats.ConnectionCluster{Members: natsMembers}
+
+	err = logger.Connect(natsInfo)
+	if err != nil {
+		log.Fatalln("could not connect logger:", err)
+	}
+
+	err = natsClient.Connect(natsInfo)
+	if err != nil {
+		log.Fatalln("could not connect to nats:", err)
+	}
+
 	logger.Component = fmt.Sprintf("executor.%s", *executorID)
 
 	etcdAdapter := etcdstoreadapter.NewETCDStoreAdapter(
@@ -64,14 +106,10 @@ func main() {
 	)
 	err = etcdAdapter.Connect()
 	if err != nil {
-		logger.Fatal("etcd-connect", map[string]interface{}{
+		logger.Fatal("etcd.connect-failed", map[string]interface{}{
 			"error": err.Error(),
 		})
 	}
-
-	err = logger.Connect(&yagnats.ConnectionInfo{
-		Addr: *natsAddress,
-	})
 
 	bbs := bbs.New(bbs.NewHurlerKicker(*hurlerAddress), etcdAdapter, timeprovider.NewTimeProvider())
 
