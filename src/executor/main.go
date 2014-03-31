@@ -55,6 +55,7 @@ var maxMemory = flag.Int("memoryMB", 1000, "maximum memory capacity")
 
 var stop = make(chan bool)
 var tasks = &sync.WaitGroup{}
+var once = &sync.Once{}
 
 var executorID string
 
@@ -77,10 +78,12 @@ func main() {
 	executorID = executorUUID.String()
 
 	cleanup.Register(func() {
-		logger.Info("shutting-down", map[string]interface{}{})
-		close(stop)
-		tasks.Wait()
-		logger.Info("shutdown", map[string]interface{}{})
+		once.Do(func() {
+			logger.Info("shutting-down", map[string]interface{}{})
+			close(stop)
+			tasks.Wait()
+			logger.Info("shutdown", map[string]interface{}{})
+		})
 	})
 
 	natsClient := yagnats.NewClient()
@@ -180,6 +183,13 @@ func maintainPresence(bbs bbs.ExecutorBBS, ready chan<- bool) error {
 
 			case <-stop:
 				p.Remove()
+
+				for _ = range statusChannel {
+				}
+
+				tasks.Done()
+
+				return
 			}
 		}
 	}()
@@ -229,7 +239,12 @@ func convergeTasks(bbs bbs.ExecutorBBS) {
 				logger.Info("converge-lock.lost", map[string]interface{}{})
 			}
 		case <-stop:
-			releaseLock <- nil
+			close(releaseLock)
+
+			for _ = range statusChannel {
+			}
+
+			return
 		}
 	}
 }

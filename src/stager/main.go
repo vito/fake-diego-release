@@ -53,6 +53,7 @@ var hurlerAddress = flag.String("hurlerAddress", "127.0.0.1:9090", "hurler addre
 
 var stop = make(chan bool)
 var tasks = &sync.WaitGroup{}
+var once = &sync.Once{}
 
 type stagingMessage struct {
 	Count    int `json:"count"`
@@ -69,10 +70,12 @@ func main() {
 	flag.Parse()
 
 	cleanup.Register(func() {
-		logger.Info("shutting-down", map[string]interface{}{})
-		close(stop)
-		tasks.Wait()
-		logger.Info("shutdown", map[string]interface{}{})
+		once.Do(func() {
+			logger.Info("shutting-down", map[string]interface{}{})
+			close(stop)
+			tasks.Wait()
+			logger.Info("shutdown", map[string]interface{}{})
+		})
 	})
 
 	natsClient := yagnats.NewClient()
