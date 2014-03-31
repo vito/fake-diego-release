@@ -5,4 +5,7 @@ dependencies:
   - golang
 
 files:
-  - '**/*.go'
+  - executor/**/*.go
+  - github.com/**/*.go
+  - runtime-schema/**/*.go
+  - logger/**/*.go
