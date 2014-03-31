@@ -21,6 +21,8 @@ case $1 in
 
     mkdir -p $DATA_DIR/depot
 
+    ulimit -n 65536
+
     echo $$ > /var/vcap/sys/run/stager/stager.pid
 
     exec /var/vcap/packages/stager/bin/stager \

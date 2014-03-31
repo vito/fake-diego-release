@@ -27,6 +27,8 @@ case $ACTION in
     mkdir -p $DATA_DIR/depot
     mkdir -p $TMP_DIR
 
+    ulimit -n 65536
+
     echo $$ > /var/vcap/sys/run/executor/executor-${NUM}.pid
 
     exec /var/vcap/packages/executor/bin/executor \
