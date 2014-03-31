@@ -61,6 +61,10 @@ func (h *Handler) syncTable(etcd *etcdstoreadapter.ETCDStoreAdapter, syncInterva
 		roundRobins, _ := allNodes.Lookup("round-robin")
 
 		for _, host := range fanouts.ChildNodes {
+			if len(host.ChildNodes) == 0 {
+				continue
+			}
+
 			hostname := path.Base(host.Key)
 
 			route := newTable[hostname]
@@ -79,6 +83,10 @@ func (h *Handler) syncTable(etcd *etcdstoreadapter.ETCDStoreAdapter, syncInterva
 		}
 
 		for _, host := range roundRobins.ChildNodes {
+			if len(host.ChildNodes) == 0 {
+				continue
+			}
+
 			hostname := path.Base(host.Key)
 
 			route := newTable[hostname]
