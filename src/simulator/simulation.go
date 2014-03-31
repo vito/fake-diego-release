@@ -104,6 +104,13 @@ func runSimulation(natsClient yagnats.NATSClient) {
 	executorIndexes := map[string]int{}
 
 	_, err = natsClient.Subscribe("completed-task", func(msg *yagnats.Message) {
+		defer func() {
+			e := recover()
+			if e != nil {
+				logger.Error("RECOVERED PANIC:", e)
+			}
+		}()
+
 		var task *models.Task
 
 		err := json.Unmarshal(msg.Payload, &task)
