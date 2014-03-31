@@ -4,6 +4,7 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	_ "net/http/pprof"
 	"runtime"
 	"strings"
 	"time"
@@ -21,7 +22,7 @@ type Endpoint struct {
 	Addr string
 }
 
-type Dispatch func(*workerpool.WorkerPool, *http.Request, []*Endpoint) (*http.Response, error)
+type Dispatch func(*http.Transport, *http.Request, []*Endpoint) (*http.Response, error)
 
 var listenAddr = flag.String(
 	"listenAddr",
@@ -48,9 +49,13 @@ func main() {
 
 	table := map[string]Route{}
 
+	transport := &http.Transport{
+		ResponseHeaderTimeout: 10 * time.Second,
+	}
+
 	handler := &Handler{
-		table: table,
-		pool:  workerpool.NewWorkerPool(1000),
+		table:     table,
+		transport: transport,
 	}
 
 	etcdAdapter := etcdstoreadapter.NewETCDStoreAdapter(
@@ -64,5 +69,7 @@ func main() {
 
 	go handler.syncTable(etcdAdapter, *syncInterval)
 
-	http.ListenAndServe(*listenAddr, handler)
+	http.Handle("/", handler)
+
+	http.ListenAndServe(*listenAddr, nil)
 }

@@ -4,18 +4,16 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"os"
 	"path"
 	"sync"
 	"time"
 
 	"github.com/cloudfoundry/storeadapter/etcdstoreadapter"
-	"github.com/cloudfoundry/storeadapter/workerpool"
 )
 
 type Handler struct {
-	table map[string]Route
-	pool  *workerpool.WorkerPool
+	table     map[string]Route
+	transport *http.Transport
 
 	sync.RWMutex
 }
@@ -31,7 +29,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := route.Dispatch(h.pool, r, route.Endpoints)
+	res, err := route.Dispatch(h.transport, r, route.Endpoints)
 	if err != nil {
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return
@@ -45,9 +43,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(res.StatusCode)
 
-	writer := io.MultiWriter(w, os.Stderr)
-
-	_, err = io.Copy(writer, res.Body)
+	_, err = io.Copy(w, res.Body)
 	if err != nil {
 		return
 	}

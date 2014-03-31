@@ -5,13 +5,9 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"net/http"
-
-	"github.com/cloudfoundry/storeadapter/workerpool"
 )
 
-func RoundRobin(pool *workerpool.WorkerPool, request *http.Request, endpoints []*Endpoint) (*http.Response, error) {
-	transport := &http.Transport{}
-
+func RoundRobin(transport *http.Transport, request *http.Request, endpoints []*Endpoint) (*http.Response, error) {
 	startingPoint := rand.Intn(len(endpoints))
 
 	body, err := ioutil.ReadAll(request.Body)
