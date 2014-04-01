@@ -71,7 +71,7 @@ head.ready(function() {
     executorsPlot.draw($('#time').val())
     distributionPlot.draw($('#time').val())
     updateErrors($('#time').val())
-    // $('#info').text(diego.info.etcd_nodes + " ETCD, " + diego.info.executors + " Execs, " + diego.info.run_onces + " Apps in " + diego.info.over + "s | " + $('#time').val() + "/" + Math.floor(diego.result.elapsed_time) + " seconds")
+    $('#info').text(distributionPlot.totalExecutors + " Execs, " + diego.info.run_onces + " Tasks | " + $('#time').val() + "/" + Math.floor(diego.result.elapsed_time) + " seconds")
   }
 
   $('input').change(update);

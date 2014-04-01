@@ -84,9 +84,6 @@ func main() {
 		outputFile.Sync()
 	})
 
-	//write info to the output dir
-	writeInfo()
-
 	//start etcd
 	natsClient := yagnats.NewClient()
 
@@ -120,6 +117,9 @@ func main() {
 		})
 	}
 
+	//write info to the output dir
+	writeInfo()
+
 	//monitor etcd
 	monitorETCD(etcdAdapter)
 
@@ -130,7 +130,7 @@ func main() {
 }
 
 func writeInfo() {
-	data := fmt.Sprintf(`{ "run_onces": %d, "run_once_memory": %d, "executors": 50 } `, nTasks, taskMemory)
+	data := fmt.Sprintf(`{ "run_onces": %d, "run_once_memory": %d } `, nTasks, taskMemory)
 
 	logger.Info("simulator.running", data)
 

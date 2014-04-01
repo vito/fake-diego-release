@@ -1,13 +1,21 @@
 DistributionPlot = function(graph) {
   this.graph = graph;
- }
+}
 
 DistributionPlot.prototype = {
   compute: function() {
     this.targetRunOnces = diego.info.run_onces;
 
+    var executors = []
+
+    _.each(diego.etcd_stats, function(stat) {
+      executors.push(stat.present_executors)
+    }, this)
+
+    this.totalExecutors = _.max(executors)
+
     this.executors = []
-    for (i = 1 ; i < diego.info.executors+1 ;i++) {
+    for (i = 1 ; i < this.totalExecutors+1 ;i++) {
       this.executors.push(i-0.5)
       this.executors.push(i+0.5)
     }
@@ -19,7 +27,7 @@ DistributionPlot.prototype = {
 
   computeDistribution: function(time) {
     var distribution = []
-    for (i = 1 ; i < diego.info.executors+1 ;i++) {
+    for (i = 1 ; i < this.totalExecutors+1 ;i++) {
       distribution[i - 1] = 0
     }
 
@@ -31,7 +39,7 @@ DistributionPlot.prototype = {
 
 
     var finalDistribution = []
-    for (i = 1 ; i < diego.info.executors+1 ;i++) {
+    for (i = 1 ; i < this.totalExecutors+1 ;i++) {
       finalDistribution.push(distribution[i])
       finalDistribution.push(distribution[i])
     }
@@ -55,7 +63,7 @@ DistributionPlot.prototype = {
   setScale: function() {
     this.graph.setScale(new PlotScale({
       xmin: 1,
-      xmax: diego.info.executors,
+      xmax: this.totalExecutors,
       ymin: 0,
       ymax: this.yMax * 1.01,
       width: this.graph.width(),
@@ -77,9 +85,9 @@ DistributionPlot.prototype = {
   buildXAxis: function(location) {
     return new Axis({
       location: location,
-      majorTicks: _.range(1, diego.info.executors + 1, 10),
-      minorTicks: _.range(1, diego.info.executors + 1, 5),
-      labels: _(_.range(0, diego.info.executors, 10)).map(function(x) {
+      majorTicks: _.range(1, this.totalExecutors + 1, 10),
+      minorTicks: _.range(1, this.totalExecutors + 1, 5),
+      labels: _(_.range(0, this.totalExecutors, 10)).map(function(x) {
         return {x: x, label: x}
       }).value(),
       font: '24px sans-serif'

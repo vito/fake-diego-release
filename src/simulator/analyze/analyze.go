@@ -52,7 +52,10 @@ func main() {
 	out += errors
 	out += "}"
 
-	ioutil.WriteFile("./viz/data/data.json", []byte(out), 0777)
+	err = ioutil.WriteFile("./viz/data/data.json", []byte(out), 0777)
+	if err != nil {
+		panic(err)
+	}
 
 	exec.Command("open", "-a", "Safari", "./viz/application.html").Run()
 }

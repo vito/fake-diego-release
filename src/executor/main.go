@@ -24,9 +24,17 @@ import (
 	"runtime-schema/bbs"
 )
 
-var listenAddr = flag.String("listenAddr", "127.0.0.1:4444", "listening address for api server")
+var listenAddr = flag.String(
+	"listenAddr",
+	"127.0.0.1:4444",
+	"listening address for api server",
+)
 
-var etcdCluster = flag.String("etcdCluster", "http://127.0.0.1:4001", "comma-separated list of etcd URIs (http://ip:port)")
+var etcdCluster = flag.String(
+	"etcdCluster",
+	"http://127.0.0.1:4001",
+	"comma-separated list of etcd URIs (http://ip:port)",
+)
 
 var natsAddresses = flag.String(
 	"natsAddresses",
@@ -46,12 +54,34 @@ var natsPassword = flag.String(
 	"Password for nats user",
 )
 
-var hurlerAddress = flag.String("hurlerAddress", "127.0.0.1:9090", "hurler address")
+var hurlerAddress = flag.String("hurlerAddress",
+	"127.0.0.1:9090",
+	"hurler address",
+)
 
-var heartbeatInterval = flag.Duration("heartbeatInterval", 60*time.Second, "the interval, in seconds, between heartbeats for maintaining presence")
-var convergenceInterval = flag.Duration("convergenceInterval", 30*time.Second, "the interval, in seconds, between convergences")
-var timeToClaimTask = flag.Duration("timeToClaimTask", 30*time.Minute, "unclaimed run onces are marked as failed, after this time (in seconds)")
-var maxMemory = flag.Int("memoryMB", 1000, "maximum memory capacity")
+var heartbeatInterval = flag.Duration(
+	"heartbeatInterval",
+	60*time.Second,
+	"the interval between heartbeats for maintaining presence",
+)
+
+var convergenceInterval = flag.Duration(
+	"convergenceInterval",
+	30*time.Second,
+	"the interval between convergences",
+)
+
+var timeToClaimTask = flag.Duration(
+	"timeToClaimTask",
+	30*time.Minute,
+	"unclaimed run onces are marked as failed, after this time (in seconds)",
+)
+
+var maxMemory = flag.Int(
+	"memoryMB",
+	1000,
+	"maximum memory capacity",
+)
 
 var stop = make(chan bool)
 var tasks = &sync.WaitGroup{}
